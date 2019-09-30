@@ -1,0 +1,35 @@
+# Algorithm 3.3 Partial Least Squares.
+import numpy as np
+import pandas as pd
+from scipy import stats
+
+df = pd.read_csv('../data/prostate/prostate.data', delimiter='\t', index_col=0)
+mask_train = df.pop('train')
+df_y = df.pop('lpsa')
+
+train_x = df[mask_train == 'T']
+train_y = df_y[mask_train == 'T']
+
+train_x_centered = train_x - train_x.mean(axis = 0)
+train_x_centered /= np.linalg.norm(train_x_centered, axis=0)
+train_y_centered = train_y - train_y.mean()
+def PLS(X, y):
+    X = X.copy()
+    y = y.copy()
+
+    n, p = X.shape
+    y_fit = y.mean() * np.ones(n)
+    Z = np.zeros_like(X)
+    theta = np.zeros(p)
+    
+    for m in range(p):
+        for j in range(p):
+            phi = np.dot(X[:, j], y)
+            Z[:, m] += phi * X[:, j]
+
+        theta[m] = np.dot(Z[:, m], y) / np.dot(Z[:, m], Z[:, m])
+        y_fit += theta[m] * Z[:, m]
+        
+        for j in range(p):
+            X[:, j] -= np.dot(Z[:, m], X[:, j]) / np.dot(Z[:, m], Z[:, m]) * Z[:, m]
+    return y_fit
